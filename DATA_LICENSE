@@ -1,0 +1,28 @@
+Geographic data in data.js
+==========================
+
+data.js contains simplified, re-projected geometry derived from the
+following sources. It is not covered by the MIT license in LICENSE.
+
+1. Canton outlines (window.GEO.ch.cantons)
+   Derived from OpenStreetMap data via the click_that_hood project.
+   © OpenStreetMap contributors — https://www.openstreetmap.org/copyright
+   Made available under the Open Database License (ODbL) 1.0:
+   https://opendatacommons.org/licenses/odbl/1-0/
+   As a derivative database, this portion of data.js is likewise
+   distributed under the ODbL 1.0.
+
+2. Ticino districts (window.GEO.ti.districts)
+   Derived from swissBOUNDARIES3D via the swiss-maps package.
+   Source: Federal Office of Topography swisstopo.
+
+3. Rivers and lakes (rivers, lakes in window.GEO.ch and window.GEO.ti)
+   Derived from swissTLMRegio hydrography.
+   Source: Federal Office of Topography swisstopo.
+
+   swisstopo data is open government data, free to use (including
+   commercially) provided the source is credited:
+   https://www.swisstopo.admin.ch/en/terms-of-use-free-geodata-and-geoservices
+
+4. Town positions (window.GEO.ti.cities)
+   Hand-placed from LV95 coordinates; no third-party rights.

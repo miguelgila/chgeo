@@ -29,6 +29,11 @@ To use a custom domain such as `chgeo.giar.dev`: add a `CNAME` file containing `
 
 Geometry is simplified and projected to SVG coordinates by a small Python pipeline (not included here); each entry carries its path (`d`) and a label anchor (`cx`, `cy`).
 
+## License
+
+- **Code** (`index.html`, icons, manifest): [MIT](LICENSE).
+- **Map data** (`data.js`): not MIT. The canton outlines are derived from OpenStreetMap (© OpenStreetMap contributors) and distributed under the [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/); the remaining geometry is derived from swisstopo open government data (source: Federal Office of Topography swisstopo). See [DATA_LICENSE](DATA_LICENSE).
+
 ## Adding a deck
 
 Decks live in the `MAPS` object at the top of the script in `index.html`. A deck is a `mode` with a `kind` (`zone`, `pin`, `river`, `lake` or `water`) and a `targets()` function returning `{id, name, cx, cy}` items; the geometry it refers to must exist in `data.js`.

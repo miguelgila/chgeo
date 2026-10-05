@@ -58,7 +58,8 @@
   .river{fill:none;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
   .hit{cursor:pointer}
   .riverHit{fill:none;stroke:rgba(0,0,0,0);stroke-width:16;pointer-events:stroke;cursor:pointer}
-  .pin{stroke:#fff;stroke-width:2.5;cursor:pointer}
+  .pin{stroke:#fff;stroke-width:2.5;pointer-events:none}
+  .pinHit{fill:transparent;cursor:pointer}
   .abbr{font-size:13px;font-weight:700;fill:var(--muted);pointer-events:none}
   .chip{position:absolute;transform:translate(-50%,-50%);padding:3px 8px;border-radius:999px;border:1.5px solid var(--bad);background:#fff;color:var(--bad);font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.18)}
   .chip.up{transform:translate(-50%,-170%)}
@@ -181,7 +182,11 @@
     S.view=clampView({z,cx:mx===undefined?v.cx:mx+(v.cx-mx)*r,cy:my===undefined?v.cy:my+(v.cy-my)*r});applyView();}
   function applyView(){const v=S.view;const vw=W()/v.z,vh=H()/v.z;const vx=v.cx-vw/2,vy=v.cy-vh/2;
     svg.setAttribute('viewBox',vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1));
-    box.classList.toggle('zoomed',v.z>1);el('zoomReset').textContent=v.z>1.01?Math.round(v.z*100)+'%':'Zoom';renderChips();}
+    box.classList.toggle('zoomed',v.z>1);el('zoomReset').textContent=v.z>1.01?Math.round(v.z*100)+'%':'Zoom';
+    // tap areas sized in screen px (map units per px = u), so thin rivers and small pins stay finger-sized at any zoom
+    const u=vw/(box.clientWidth||vw);nodes.riverHits.forEach(n=>n.style.strokeWidth=Math.max(16,30*u));nodes.pinHits.forEach(n=>n.setAttribute('r',Math.max(11,18*u)));
+    renderChips();}
+  window.addEventListener('resize',applyView);
   const ptrs={};let moved=0,dragged=false;
   box.addEventListener('pointerdown',e=>{ptrs[e.pointerId]={x:e.clientX,y:e.clientY};moved=0;});
   box.addEventListener('pointermove',e=>{const p=ptrs[e.pointerId];if(!p)return;const ids=Object.keys(ptrs);const v=S.view;
@@ -197,7 +202,7 @@
   el('zoomIn').onclick=()=>zoomAt(1.6);el('zoomOut').onclick=()=>zoomAt(1/1.6);el('zoomReset').onclick=()=>{S.view={z:1,cx:W()/2,cy:H()/2};applyView();};
 
   // ---------- game actions ----------
-  function pickTarget(id){if(S.checked||dragged)return;
+  function pickTarget(id){if(S.checked||dragged||!byId[id])return;
     if(S.selected){S.placed[id]=S.selected;S.selected=null;}
     else if(S.placed[id]){delete S.placed[id];}
     render();}
@@ -207,7 +212,7 @@
   el('hintsBtn').onclick=()=>{S.hints=!S.hints;render();};
 
   // ---------- SVG build (once per map) ----------
-  const nodes={zones:[],lakes:[],rivers:[],riverHits:[],pins:[],abbrs:[]};
+  const nodes={zones:[],lakes:[],rivers:[],riverHits:[],pins:[],pinHits:[],abbrs:[]};
   function mk(tag,attrs,cls){const n=document.createElementNS(SVGNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);if(cls)n.setAttribute('class',cls);return n;}
   function buildSvg(){svg.innerHTML='';for(const k in nodes)nodes[k]=[];const m=map();
     box.style.aspectRatio=m.w+' / '+m.h;el('mapPanel').classList.toggle('portrait',m.portrait);
@@ -215,7 +220,8 @@
     m.lakes.forEach(l=>{const n=mk('path',{d:l.d},'lake');n.onclick=()=>pickTarget('l:'+l.name);svg.appendChild(n);nodes.lakes.push(n);});
     m.rivers.forEach(r=>{const n=mk('path',{d:r.d},'river');svg.appendChild(n);nodes.rivers.push(n);});
     m.rivers.forEach(r=>{const n=mk('path',{d:r.d},'riverHit');n.onclick=()=>pickTarget('r:'+r.name);svg.appendChild(n);nodes.riverHits.push(n);});
-    m.pins.forEach(p=>{const n=mk('circle',{cx:p.cx,cy:p.cy,r:11},'pin');n.onclick=()=>pickTarget(p.id);svg.appendChild(n);nodes.pins.push(n);});
+    m.pins.forEach(p=>{const n=mk('circle',{cx:p.cx,cy:p.cy,r:11},'pin');svg.appendChild(n);nodes.pins.push(n);});
+    m.pins.forEach(p=>{const n=mk('circle',{cx:p.cx,cy:p.cy,r:11},'pinHit');n.onclick=()=>pickTarget(p.id);svg.appendChild(n);nodes.pinHits.push(n);});
     m.zones.forEach(z=>{const n=mk('text',{x:z.cx,y:z.cy,'text-anchor':'middle','dominant-baseline':'central'},'abbr');n.textContent=z.abbr||'';svg.appendChild(n);nodes.abbrs.push(n);});
     applyView();}
 
@@ -234,13 +240,13 @@
     // map colours
     m.zones.forEach((z,i)=>{const n=nodes.zones[i];
       n.setAttribute('fill',k==='zone'?status(z.id,tint(i,88,40),tint(i,58,60),'#E4E4DF',cnt):(k==='pin'?tint(i,92,30):'#EBEBE6'));
-      n.style.cursor=k==='zone'?'pointer':'default';});
+      n.style.cursor=k==='zone'?'pointer':'default';n.style.pointerEvents=k==='zone'?'':'none';});
     m.lakes.forEach((l,i)=>{const n=nodes.lakes[i];const active=k==='lake'||k==='water';
-      n.setAttribute('fill',active?status('l:'+l.name,'#9CC3E0',tint(i+5,48,70),'#D7D7D1',cnt):'#BFD7EA');n.style.cursor=active?'pointer':'default';});
+      n.setAttribute('fill',active?status('l:'+l.name,'#9CC3E0',tint(i+5,48,70),'#D7D7D1',cnt):'#BFD7EA');n.style.cursor=active?'pointer':'default';n.style.pointerEvents=active?'':'none';});
     m.rivers.forEach((r,i)=>{const n=nodes.rivers[i];const active=k==='river'||k==='water';
       n.setAttribute('stroke',active?status('r:'+r.name,'#3F7FB5',tint(i,42,75),'#B0B0AA',cnt):'#8FB6D3');
       n.setAttribute('stroke-width',active?(S.placed['r:'+r.name]||S.checked?4.5:3):1.6);nodes.riverHits[i].style.display=active?'':'none';});
-    m.pins.forEach((p,i)=>{const n=nodes.pins[i];n.style.display=k==='pin'?'':'none';if(k==='pin')n.setAttribute('fill',status(p.id,'#6B6B66',tint(i,45,70),'#D7D7D1',cnt));});
+    m.pins.forEach((p,i)=>{const n=nodes.pins[i];n.style.display=nodes.pinHits[i].style.display=k==='pin'?'':'none';if(k==='pin')n.setAttribute('fill',status(p.id,'#6B6B66',tint(i,45,70),'#D7D7D1',cnt));});
     nodes.abbrs.forEach(n=>{n.style.display=(S.hints&&M.hints)?'':'none';});
     // cards
     const placedCards=new Set(Object.values(S.placed));const cards=el('cards');cards.innerHTML='';

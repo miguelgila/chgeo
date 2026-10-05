@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`chgeo` ("Geografia svizzera") is a static, dependency-free geography quiz **in Italian**, aimed at learning Swiss cantons, capitals, rivers and lakes, plus Ticino's districts, towns, rivers and lakes. The player picks a card, taps the matching place on an SVG map, then presses **Verifica** to score. It is hosted on GitHub Pages from `main` / root (`.nojekyll` present); it is also an installable PWA via `manifest.webmanifest` (no service worker).
+`chgeo` ("Geografia svizzera") is a static, dependency-free geography quiz **in Italian**, aimed at learning Swiss cantons, capitals, rivers and lakes, plus Ticino's districts, towns, rivers and lakes. The player picks a card, taps the matching place on an SVG map, then presses **Verifica** to score. It is hosted on GitHub Pages from `main` / root (`.nojekyll` present) at the custom domain **chgeo.giar.dev**, which is set by the `CNAME` file. Don't remove or rename `CNAME`, or the custom domain stops working. It is also an installable PWA via `manifest.webmanifest` (no service worker).
+
+The footer carries the required data attributions (swisstopo, "© contributori OpenStreetMap" linked to openstreetmap.org/copyright) and a plain Ko-fi donation link (`ko-fi.com/miguelgila`). Keep the link plain: no third-party widgets, scripts, analytics or cookies, since the audience is schoolchildren and the site currently needs no consent banner. Code is MIT (`LICENSE`); `data.js` is ODbL/swisstopo (`DATA_LICENSE`).
 
 There is no build step, no package manager, no tests and no linter. All user-facing text is Italian; keep it that way.
 

@@ -20,7 +20,7 @@ python3 -m http.server 8000   # then open http://localhost:8000
 
 There are only two source files:
 
-- **`data.js`**: generated geometry, assigned to `window.GEO`. Do not hand-edit the large path strings. It comes from an external Python pipeline that is not in this repo (simplification plus projection to SVG coordinates). Its shape:
+- **`data.js`**: generated geometry, assigned to `window.GEO`. Do not hand-edit the large path strings. It was produced once by Claude Design, and that generator was not kept, so `data.js` cannot currently be regenerated. A reproducible pipeline is planned in issue #1 (swisstopo LV95 data → SVG, with simplification that keeps shared borders intact). Its shape:
   - `GEO.ch`: `w:900, h:600`, `cantons[{name,abbr,d,cx,cy}]` (26), `capitals{abbr→name}`, `rivers[{name,d,cx,cy}]`, `lakes[{name,d,cx,cy}]`
   - `GEO.ti`: `w:600, h:800` (portrait), `districts[{name,abbr,d,cx,cy}]`, `cities[{name,cx,cy}]` (pins only, no path), `rivers`, `lakes`
   - `d` is an SVG path in map coordinates; `(cx, cy)` is the label/chip anchor.

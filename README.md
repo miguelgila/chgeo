@@ -27,7 +27,7 @@ To use a custom domain such as `chgeo.giar.dev`: add a `CNAME` file containing `
 - Rivers and lakes: swissTLMRegio hydrography (swisstopo, open government data).
 - Town positions: hand-placed from LV95 coordinates.
 
-Geometry is simplified and projected to SVG coordinates by a small Python pipeline (not included here); each entry carries its path (`d`) and a label anchor (`cx`, `cy`).
+Geometry was simplified and projected to SVG coordinates by a one-off generator that is not preserved; each entry carries its path (`d`) and a label anchor (`cx`, `cy`). A reproducible pipeline is planned in [#1](https://github.com/miguelgila/chgeo/issues/1).
 
 ## License
 

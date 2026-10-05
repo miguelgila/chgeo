@@ -27,7 +27,7 @@ There are three source files:
 
   Missing UI keys fall back to Italian, and missing places fall back to the name in `data.js`. Every language must define the same UI keys and placeholders. Romansh strings still need review by a native speaker. In German and French, cards are "Kärtchen" and "fiches", because "Karte"/"carte" already means the map.
 
-- **`data.js`**: generated geometry, assigned to `window.GEO`. Do not hand-edit the large path strings. It was produced once by Claude Design, and that generator was not kept, so `data.js` cannot currently be regenerated. A reproducible pipeline is planned in issue #1 (swisstopo LV95 data → SVG, with simplification that keeps shared borders intact). Its shape:
+- **`data.js`**: generated geometry, assigned to `window.GEO`. Do not hand-edit the large path strings. It was produced once by Claude Design, and that generator was not kept, so `data.js` cannot currently be regenerated. A reproducible pipeline is planned in issue #3 (swisstopo LV95 data → SVG, with simplification that keeps shared borders intact). Its shape:
   - `GEO.ch`: `w:900, h:600`, `cantons[{name,abbr,d,cx,cy}]` (26), `capitals{abbr→name}`, `rivers[{name,d,cx,cy}]`, `lakes[{name,d,cx,cy}]`
   - `GEO.ti`: `w:600, h:800` (portrait), `districts[{name,abbr,d,cx,cy}]`, `cities[{name,cx,cy}]` (pins only, no path), `rivers`, `lakes`
   - `d` is an SVG path in map coordinates; `(cx, cy)` is the label/chip anchor.

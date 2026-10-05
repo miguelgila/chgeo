@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`chgeo` ("Geografia svizzera") is a static, dependency-free geography quiz **in Italian**, aimed at learning Swiss cantons, capitals, rivers and lakes, plus Ticino's districts, towns, rivers and lakes. The player picks a card, taps the matching place on an SVG map, then presses **Verifica** to score. It is hosted on GitHub Pages from `main` / root (`.nojekyll` present) at the custom domain **chgeo.giar.dev**, which is set by the `CNAME` file. Don't remove or rename `CNAME`, or the custom domain stops working. It is also an installable PWA via `manifest.webmanifest` (no service worker).
+`chgeo` ("Geografia svizzera") is a static, dependency-free geography quiz, available in **Italian, German, French, Romansh and English**, aimed at learning Swiss cantons, capitals, rivers and lakes, plus Ticino's districts, towns, rivers and lakes. The player picks a card, taps the matching place on an SVG map, then presses **Verifica** to score. It is hosted on GitHub Pages from `main` / root (`.nojekyll` present) at the custom domain **chgeo.giar.dev**, which is set by the `CNAME` file. Don't remove or rename `CNAME`, or the custom domain stops working. It is also an installable PWA via `manifest.webmanifest` (no service worker).
 
 The footer carries the required data attributions (swisstopo, "© contributori OpenStreetMap" linked to openstreetmap.org/copyright) and a plain Ko-fi donation link (`ko-fi.com/miguelgila`). Keep the link plain: no third-party widgets, scripts, analytics or cookies, since the audience is schoolchildren and the site currently needs no consent banner. Code is MIT (`LICENSE`); `data.js` is ODbL/swisstopo (`DATA_LICENSE`).
 
-There is no build step, no package manager, no tests and no linter. All user-facing text is Italian; keep it that way.
+There is no build step, no package manager, no tests and no linter. Never hard-code user-facing text in `index.html`: add a key to every language in `i18n.js`.
 
 ## Run locally
 
@@ -18,9 +18,16 @@ python3 -m http.server 8000   # then open http://localhost:8000
 
 ## Architecture
 
-There are only two source files:
+There are three source files:
 
-- **`data.js`**: generated geometry, assigned to `window.GEO`. Do not hand-edit the large path strings. It was produced once by Claude Design, and that generator was not kept, so `data.js` cannot currently be regenerated. A reproducible pipeline is planned in issue #1 (swisstopo LV95 data → SVG, with simplification that keeps shared borders intact). Its shape:
+- **`i18n.js`**: `window.I18N`, with three parts:
+  - `langs`: the list of languages.
+  - `ui[lang][key]`: flat UI strings with `{0}`/`{1}` placeholders. Mode strings are keyed `mode.<id>.<label|tray|subtitle|what|help>`, and maps are keyed `map.<id>` and `map.<id>.title`.
+  - `places[targetId][lang]`: place names keyed by the same target IDs as the game (`ZH`, `cap:ZH`, `r:Reno`, `l:Lemano`, `d:…`, `c:…`).
+
+  Missing UI keys fall back to Italian, and missing places fall back to the name in `data.js`. Every language must define the same UI keys and placeholders. Romansh strings still need review by a native speaker. In German and French, cards are "Kärtchen" and "fiches", because "Karte"/"carte" already means the map.
+
+- **`data.js`**: generated geometry, assigned to `window.GEO`. Do not hand-edit the large path strings. It was produced once by Claude Design, and that generator was not kept, so `data.js` cannot currently be regenerated. A reproducible pipeline is planned in issue #3 (swisstopo LV95 data → SVG, with simplification that keeps shared borders intact). Its shape:
   - `GEO.ch`: `w:900, h:600`, `cantons[{name,abbr,d,cx,cy}]` (26), `capitals{abbr→name}`, `rivers[{name,d,cx,cy}]`, `lakes[{name,d,cx,cy}]`
   - `GEO.ti`: `w:600, h:800` (portrait), `districts[{name,abbr,d,cx,cy}]`, `cities[{name,cx,cy}]` (pins only, no path), `rivers`, `lakes`
   - `d` is an SVG path in map coordinates; `(cx, cy)` is the label/chip anchor.
@@ -33,6 +40,8 @@ There are only two source files:
   - **`render()`** runs on every state change and recolours the existing nodes through `status()` (idle, placed, ok, bad or unplaced colours). It also rebuilds the card tray, progress, results and the "Da ripassare" error list. After a check, `renderChips()` positions the correct-name labels over wrong placements as HTML overlays.
   - **Zoom/pan** works by rewriting the SVG `viewBox` (`S.view`, zoom range 1–8). It supports pointer drag, two-finger pinch and ctrl/wheel. A drag sets `dragged` so that the pointer-up does not count as a pick.
   - The last selected map is persisted in `localStorage['chgeo.map']`.
+  - **i18n**: `t(key, ...args)` returns UI strings, `pn(id, fallback)` returns place names, and `mt(k)` returns strings for the current mode. Static markup is translated through `data-i18n` (text) and `data-i18n-aria` (aria-label) attributes. The language is chosen by `?lang=xx`, then `localStorage['chgeo.lang']`, then `navigator.languages`, then Italian. `setLang()` re-translates without reshuffling, so a game in progress survives a language switch: `names()` rebuilds the targets, while `fresh()` also reshuffles.
+  - Target IDs are derived from the **Italian names in `data.js`**, so they are stable keys, not display text. Display names always go through `pn()`.
 
 ## Adding a deck
 

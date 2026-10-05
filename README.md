@@ -1,8 +1,8 @@
 # chgeo — Geografia svizzera
 
-A small, dependency-free geography quiz (in Italian) for learning the Swiss cantons, capitals, rivers and lakes, plus the districts, towns, rivers and lakes of Ticino. Pick a card, tap the matching place on the map, then press **Verifica** to see what matched.
+A small, dependency-free geography quiz (in Italian, German, French, Romansh and English) for learning the Swiss cantons, capitals, rivers and lakes, plus the districts, towns, rivers and lakes of Ticino. Pick a card, tap the matching place on the map, then press **Verifica** to see what matched.
 
-It is a single static page: `index.html` (markup, styles, logic) and `data.js` (map geometry). No build step, no backend.
+It is a single static page: `index.html` (markup, styles, logic), `i18n.js` (UI strings and place names per language) and `data.js` (map geometry). The language follows the browser; it can be changed in the header or forced with `?lang=it|de|fr|rm|en`. No build step, no backend.
 
 ## Run locally
 
@@ -27,7 +27,7 @@ To use a custom domain such as `chgeo.giar.dev`: add a `CNAME` file containing `
 - Rivers and lakes: swissTLMRegio hydrography (swisstopo, open government data).
 - Town positions: hand-placed from LV95 coordinates.
 
-Geometry was simplified and projected to SVG coordinates by a one-off generator that is not preserved; each entry carries its path (`d`) and a label anchor (`cx`, `cy`). A reproducible pipeline is planned in [#1](https://github.com/miguelgila/chgeo/issues/1).
+Geometry was simplified and projected to SVG coordinates by a one-off generator that is not preserved; each entry carries its path (`d`) and a label anchor (`cx`, `cy`). A reproducible pipeline is planned in [#3](https://github.com/miguelgila/chgeo/issues/3).
 
 ## License
 

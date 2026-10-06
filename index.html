@@ -290,10 +290,10 @@
     renderChips();}
   const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
-  // language: ?lang= > saved choice > browser languages > Italian
+  // language: ?lang= > saved choice > Italian (deliberately not the browser language)
   const codes=I.langs.map(x=>x[0]);let lang=new URLSearchParams(location.search).get('lang');
   if(!codes.includes(lang)){try{lang=localStorage.getItem('chgeo.lang');}catch(e){}}
-  if(!codes.includes(lang))lang=(navigator.languages||[navigator.language||'']).map(x=>String(x).slice(0,2).toLowerCase()).find(x=>codes.includes(x))||'it';
+  if(!codes.includes(lang))lang='it';
   I.langs.forEach(([c,n])=>{const o=document.createElement('option');o.value=c;o.textContent=n;el('langSel').appendChild(o);});
   el('langSel').onchange=e=>setLang(e.target.value);
   L=lang;

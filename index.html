@@ -75,6 +75,10 @@
   .card{min-height:44px;padding:0 14px;border-radius:10px;border:1.5px solid var(--btn);background:#fff;color:var(--ink);font-size:14px;font-weight:600}
   .card:hover{border-color:var(--ink)}
   .card[aria-pressed="true"]{border-color:var(--red);background:var(--red);color:#fff}
+  .card.flag{padding:5px;min-width:56px}
+  .card.flag img,.fl{display:block;width:42px;height:42px;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+  .fl{display:inline-block;width:20px;height:20px;vertical-align:-5px;margin-right:6px}
+  .chip .fl{width:13px;height:13px;vertical-align:-2px;margin-right:4px;box-shadow:none}
   .errors{display:none;flex-direction:column;gap:6px}
   .errors.show{display:flex}
   .errors h3{margin:4px 0 0;font-size:14px;font-weight:800;color:var(--bad)}
@@ -167,6 +171,7 @@
       modes:[
         {id:'cantons',kind:'zone',targets:()=>CH.cantons.map(c=>({id:c.abbr,name:pn(c.abbr,c.name),cx:c.cx,cy:c.cy})),hints:true},
         {id:'capitals',kind:'zone',targets:()=>CH.cantons.map(c=>({id:c.abbr,name:pn('cap:'+c.abbr,CH.capitals[c.abbr]),cx:c.cx,cy:c.cy}))},
+        {id:'flags',kind:'zone',targets:()=>CH.cantons.map(c=>({id:c.abbr,name:pn(c.abbr,c.name),flag:'flags/'+c.abbr+'.svg',cx:c.cx,cy:c.cy})),hints:true},
         {id:'rivers',kind:'river',targets:()=>CH.rivers.map(r=>({id:'r:'+r.name,name:pn('r:'+r.name,r.name),cx:r.cx,cy:r.cy}))},
         {id:'lakes',kind:'lake',targets:()=>CH.lakes.map(l=>({id:'l:'+l.name,name:pn('l:'+l.name,l.name),cx:l.cx,cy:l.cy}))}
       ]},
@@ -252,7 +257,7 @@
   // after Verifica: red chips with the right name over wrong placements; with S.names: a neutral label on every target
   function renderChips(){const c=el('chips');c.innerHTML='';if(!S.checked&&!S.names)return;const v=S.view;const vw=W()/v.z,vh=H()/v.z;const vx=v.cx-vw/2,vy=v.cy-vh/2;
     T.forEach(t=>{const wrong=S.checked&&S.placed[t.id]&&S.placed[t.id]!==t.id;if(!wrong&&!S.names)return;
-      const s=document.createElement('span');s.className='chip'+(wrong?'':' name')+(mode().kind==='pin'?' up':'');s.textContent=t.name;
+      const s=document.createElement('span');s.className='chip'+(wrong?'':' name')+(mode().kind==='pin'?' up':'');if(t.flag)s.appendChild(flagImg(t.flag,'fl'));s.appendChild(document.createTextNode(t.name));
       s.style.left=((t.cx-vx)/vw*100).toFixed(2)+'%';s.style.top=((t.cy-vy)/vh*100).toFixed(2)+'%';c.appendChild(s);});}
   function render(){const m=map(),M=mode(),k=M.kind;const cnt={ok:0};
     document.title=t('map.'+S.map+'.title');el('title').textContent=document.title;el('subtitle').textContent=mt('subtitle');
@@ -274,7 +279,8 @@
     // cards
     const placedCards=new Set(Object.values(S.placed));const cards=el('cards');cards.innerHTML='';
     const left=S.order.filter(a=>!placedCards.has(a));
-    left.forEach(a=>{const b=document.createElement('button');b.type='button';b.className='card';b.textContent=byId[a].name;b.setAttribute('aria-pressed',S.selected===a);b.onclick=()=>pickCard(a);cards.appendChild(b);});
+    left.forEach(a=>{const b=document.createElement('button');b.type='button';b.className='card';
+      if(byId[a].flag){b.classList.add('flag');b.appendChild(flagImg(byId[a].flag));b.setAttribute('aria-label',t('flagCard',S.order.indexOf(a)+1));}else b.textContent=byId[a].name;b.setAttribute('aria-pressed',S.selected===a);b.onclick=()=>pickCard(a);cards.appendChild(b);});
     el('trayTitle').textContent=mt('tray');el('trayHelp').textContent=mt('help');el('trayCount').textContent=t('left',left.length);
     el('empty').classList.toggle('show',left.length===0&&!S.checked);
     el('progress').textContent=t('progress',Object.keys(S.placed).length,T.length);
@@ -285,9 +291,10 @@
       el('checkHint').textContent=t(cnt.ok===T.length?'perfect':'retry');}
     const er=el('errors');er.innerHTML='';er.classList.toggle('show',wrong.length>0);
     if(wrong.length){const h=document.createElement('h3');h.textContent=t('review');er.appendChild(h);
-      wrong.forEach(x=>{const d=document.createElement('div');d.innerHTML=esc(t('wrong','\u0000'+byId[S.placed[x.id]].name+'\u0001','\u0000'+x.name+'\u0001')).replace(/\u0000/g,'<b>').replace(/\u0001/g,'</b>');er.appendChild(d);});}
-    el('mapHelp').textContent=S.checked?t('helpChecked'):(S.selected?t('helpSelected',mt('what'),byId[S.selected].name):t('helpIdle',mt('what')));
+      wrong.forEach(x=>{const d=document.createElement('div');d.innerHTML=esc(t('wrong','\u0000'+byId[S.placed[x.id]].name+'\u0001','\u0000'+x.name+'\u0001')).replace(/\u0000/g,'<b>').replace(/\u0001/g,'</b>');if(x.flag)d.prepend(flagImg(byId[S.placed[x.id]].flag,'fl'));er.appendChild(d);});}
+    el('mapHelp').textContent=S.checked?t('helpChecked'):(S.selected?(byId[S.selected].flag?t('helpSelectedFlag'):t('helpSelected',mt('what'),byId[S.selected].name)):t('helpIdle',mt('what')));
     renderChips();}
+  function flagImg(src,cls){const i=document.createElement('img');i.src=src;i.alt='';i.draggable=false;if(cls)i.className=cls;return i;}
   const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
   // language: ?lang= > saved choice > Italian (deliberately not the browser language)

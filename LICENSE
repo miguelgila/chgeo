@@ -23,5 +23,5 @@ SOFTWARE.
 ---
 
 This license covers the code and assets in this repository (index.html,
-icons, manifest). It does NOT cover the geographic data in data.js; see
-DATA_LICENSE.
+icons, manifest). It does NOT cover the geographic data in data.js or the
+canton flags in flags/; see DATA_LICENSE.

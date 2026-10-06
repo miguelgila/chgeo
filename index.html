@@ -65,6 +65,8 @@
   .abbr{font-size:13px;font-weight:700;fill:var(--muted);pointer-events:none}
   .chip{position:absolute;transform:translate(-50%,-50%);padding:3px 8px;border-radius:999px;border:1.5px solid var(--bad);background:#fff;color:var(--bad);font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.18)}
   .chip.up{transform:translate(-50%,-170%)}
+  .chip.name{border-color:var(--btn);color:var(--ink);background:rgba(255,255,255,.92);font-size:10px;padding:2px 6px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .chip:not(.name){z-index:1}
   .tray{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:12px}
   .tray h2{margin:0;font-size:16px;font-weight:800}
   .tray .count{font-size:13px;color:var(--muted)}
@@ -100,6 +102,7 @@
     <div class="seg" id="modeNav" role="group" data-i18n-aria="modesAria" aria-label="Tipo di carte"></div>
     <div class="tools">
       <div class="progress" id="progress"></div>
+      <button class="btn" id="namesBtn" type="button" data-i18n="namesShow">Mostra nomi</button>
       <button class="btn" id="hintsBtn" type="button">Mostra sigle</button>
       <button class="btn" id="resetBtn" type="button" data-i18n="reset">Ricomincia</button>
       <button class="btn primary" id="checkBtn" type="button" data-i18n="check">Verifica</button>
@@ -178,13 +181,13 @@
   };
 
   // ---------- state ----------
-  const S={map:'ch',mode:'cantons',order:[],selected:null,placed:{},checked:false,hints:false,view:{z:1,cx:0,cy:0}};
+  const S={map:'ch',mode:'cantons',order:[],selected:null,placed:{},checked:false,hints:false,names:false,view:{z:1,cx:0,cy:0}};
   const map=()=>MAPS[S.map];
   const mode=()=>map().modes.find(m=>m.id===S.mode);
   let T=[], byId={};
   function names(){T=mode().targets();byId={};T.forEach(t=>byId[t.id]=t);}
-  function fresh(){names();S.order=shuffle(T.map(t=>t.id));S.selected=null;S.placed={};S.checked=false;}
-  function setMap(id){S.map=id;S.mode=map().modes[0].id;S.view={z:1,cx:map().w/2,cy:map().h/2};fresh();buildSvg();render();try{localStorage.setItem('chgeo.map',id);}catch(e){}}
+  function fresh(){names();S.order=shuffle(T.map(t=>t.id));S.selected=null;S.placed={};S.checked=false;S.names=false;}
+  function setMap(id){S.map=id;S.mode=map().modes[0].id;S.view={z:1,cx:map().w/2,cy:map().h/2};fresh();buildSvg();render();applyView();try{localStorage.setItem('chgeo.map',id);}catch(e){}}
   function setMode(id){S.mode=id;fresh();render();}
   function setLang(l){L=l;document.documentElement.lang=l;el('metaDesc').content=t('description');
     document.querySelectorAll('[data-i18n]').forEach(n=>n.textContent=t(n.dataset.i18n));
@@ -227,6 +230,7 @@
   el('resetBtn').onclick=()=>{fresh();render();};
   el('checkBtn').onclick=()=>{S.checked=true;S.selected=null;render();};
   el('hintsBtn').onclick=()=>{S.hints=!S.hints;render();};
+  el('namesBtn').onclick=()=>{S.names=!S.names;render();};
 
   // ---------- SVG build (once per map) ----------
   const nodes={zones:[],lakes:[],rivers:[],riverHits:[],pins:[],pinHits:[],abbrs:[]};
@@ -239,21 +243,23 @@
     m.rivers.forEach(r=>{const n=mk('path',{d:r.d},'riverHit');n.onclick=()=>pickTarget('r:'+r.name);svg.appendChild(n);nodes.riverHits.push(n);});
     m.pins.forEach(p=>{const n=mk('circle',{cx:p.cx,cy:p.cy,r:11},'pin');svg.appendChild(n);nodes.pins.push(n);});
     m.pins.forEach(p=>{const n=mk('circle',{cx:p.cx,cy:p.cy,r:11},'pinHit');n.onclick=()=>pickTarget(p.id);svg.appendChild(n);nodes.pinHits.push(n);});
-    m.zones.forEach(z=>{const n=mk('text',{x:z.cx,y:z.cy,'text-anchor':'middle','dominant-baseline':'central'},'abbr');n.textContent=z.abbr||'';svg.appendChild(n);nodes.abbrs.push(n);});
-    applyView();}
+    m.zones.forEach(z=>{const n=mk('text',{x:z.cx,y:z.cy,'text-anchor':'middle','dominant-baseline':'central'},'abbr');n.textContent=z.abbr||'';svg.appendChild(n);nodes.abbrs.push(n);});}
 
   // ---------- render ----------
   function status(id,idle,done,none,counter){const card=S.placed[id];
     if(S.checked){if(card){if(card===id){counter.ok++;return 'var(--ok)';}return 'var(--bad)';}return none;}
     return card?done:idle;}
-  function renderChips(){const c=el('chips');c.innerHTML='';if(!S.checked)return;const v=S.view;const vw=W()/v.z,vh=H()/v.z;const vx=v.cx-vw/2,vy=v.cy-vh/2;
-    T.filter(t=>S.placed[t.id]&&S.placed[t.id]!==t.id).forEach(t=>{const s=document.createElement('span');s.className='chip'+(mode().kind==='pin'?' up':'');s.textContent=t.name;
+  // after Verifica: red chips with the right name over wrong placements; with S.names: a neutral label on every target
+  function renderChips(){const c=el('chips');c.innerHTML='';if(!S.checked&&!S.names)return;const v=S.view;const vw=W()/v.z,vh=H()/v.z;const vx=v.cx-vw/2,vy=v.cy-vh/2;
+    T.forEach(t=>{const wrong=S.checked&&S.placed[t.id]&&S.placed[t.id]!==t.id;if(!wrong&&!S.names)return;
+      const s=document.createElement('span');s.className='chip'+(wrong?'':' name')+(mode().kind==='pin'?' up':'');s.textContent=t.name;
       s.style.left=((t.cx-vx)/vw*100).toFixed(2)+'%';s.style.top=((t.cy-vy)/vh*100).toFixed(2)+'%';c.appendChild(s);});}
   function render(){const m=map(),M=mode(),k=M.kind;const cnt={ok:0};
     document.title=t('map.'+S.map+'.title');el('title').textContent=document.title;el('subtitle').textContent=mt('subtitle');
     const nav=el('mapNav');nav.innerHTML='';Object.keys(MAPS).forEach(id=>{const b=document.createElement('button');b.type='button';b.textContent=t('map.'+id);b.setAttribute('aria-pressed',id===S.map);b.onclick=()=>setMap(id);nav.appendChild(b);});
     const mn=el('modeNav');mn.innerHTML='';m.modes.forEach(md=>{const b=document.createElement('button');b.type='button';b.textContent=t('mode.'+md.id+'.label');b.setAttribute('aria-pressed',md.id===S.mode);b.onclick=()=>setMode(md.id);mn.appendChild(b);});
     el('hintsBtn').style.display=M.hints?'':'none';el('hintsBtn').textContent=t(S.hints?'hintsHide':'hintsShow');
+    el('namesBtn').textContent=t(S.names?'namesHide':'namesShow');el('namesBtn').setAttribute('aria-pressed',S.names);
     // map colours
     m.zones.forEach((z,i)=>{const n=nodes.zones[i];
       n.setAttribute('fill',k==='zone'?status(z.id,tint(i,88,40),tint(i,58,60),'#E4E4DF',cnt):(k==='pin'?tint(i,92,30):'#EBEBE6'));

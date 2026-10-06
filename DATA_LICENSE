@@ -26,3 +26,17 @@ following sources. It is not covered by the MIT license in LICENSE.
 
 4. Town positions (window.GEO.ti.cities)
    Hand-placed from LV95 coordinates; no third-party rights.
+
+
+Canton flags in flags/
+======================
+
+The 26 SVG flags in flags/ come from Wikimedia Commons and are public
+domain. flags/SOURCES.md lists the file page, author and licence of each
+one. They are not covered by the MIT license in LICENSE.
+
+These are official insignia. Under the Swiss Coat of Arms Protection Act
+(Wappenschutzgesetz, SR 232.21), anyone may use cantonal flags, provided
+the use is not misleading. Cantonal coats of arms (shields) are reserved
+to the cantons. This site uses the flags only to teach which flag
+belongs to which canton.

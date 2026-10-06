@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`chgeo` ("Geografia svizzera") is a static, dependency-free geography quiz, available in **Italian, German, French, Romansh and English**, aimed at learning Swiss cantons, capitals, rivers and lakes, plus Ticino's districts, towns, rivers and lakes. The player picks a card, taps the matching place on an SVG map, then presses **Verifica** to score. It is hosted on GitHub Pages from `main` / root (`.nojekyll` present) at the custom domain **chgeo.giar.dev**, which is set by the `CNAME` file. Don't remove or rename `CNAME`, or the custom domain stops working. It is also an installable PWA via `manifest.webmanifest` (no service worker).
+`chgeo` ("Geografia svizzera") is a static, dependency-free geography quiz, available in **Italian, German, French, Romansh and English**, aimed at learning Swiss cantons, capitals, canton flags, rivers and lakes, plus Ticino's districts, towns, rivers and lakes. The player picks a card, taps the matching place on an SVG map, then presses **Verifica** to score. It is hosted on GitHub Pages from `main` / root (`.nojekyll` present) at the custom domain **chgeo.giar.dev**, which is set by the `CNAME` file. Don't remove or rename `CNAME`, or the custom domain stops working. It is also an installable PWA via `manifest.webmanifest` (no service worker).
 
-The footer carries the required data attributions (swisstopo, "© contributori OpenStreetMap" linked to openstreetmap.org/copyright) and a plain Ko-fi donation link (`ko-fi.com/miguelgila`). Keep the link plain: no third-party widgets, scripts, analytics or cookies, since the audience is schoolchildren and the site currently needs no consent banner. Code is MIT (`LICENSE`); `data.js` is ODbL/swisstopo (`DATA_LICENSE`).
+The footer carries the required data attributions (swisstopo, "© contributori OpenStreetMap" linked to openstreetmap.org/copyright) and a plain Ko-fi donation link (`ko-fi.com/miguelgila`). Keep the link plain: no third-party widgets, scripts, analytics or cookies, since the audience is schoolchildren and the site currently needs no consent banner. Code is MIT (`LICENSE`); `data.js` is ODbL/swisstopo, and `flags/` is public domain (both in `DATA_LICENSE`).
 
 There is no build step, no package manager, no tests and no linter. Never hard-code user-facing text in `index.html`: add a key to every language in `i18n.js`.
 
@@ -18,7 +18,7 @@ python3 -m http.server 8000   # then open http://localhost:8000
 
 ## Architecture
 
-There are three source files:
+There are three source files, plus `flags/<ABBR>.svg`: 26 public-domain canton flags from Wikimedia Commons, with sources in `flags/SOURCES.md`. ZH, LU, ZG, FR, SO, TI and NE had a `viewBox` added so they scale reliably in Safari.
 
 - **`i18n.js`**: `window.I18N`, with three parts:
   - `langs`: the list of languages.
@@ -33,7 +33,8 @@ There are three source files:
   - `d` is an SVG path in map coordinates; `(cx, cy)` is the label/chip anchor.
 - **`index.html`**: markup, CSS and one inline IIFE script. Its main parts:
   - **`MAPS`**: one entry per map (`ch`, `ti`). Each entry normalises the `GEO` data into `zones`, `lakes`, `rivers` and `pins`, and lists the `modes` (decks) for that map.
-  - **Mode/deck**: `{id, label, tray, subtitle, what, help, kind, targets(), hints?}`. `kind` is one of `zone | pin | river | lake | water` and controls which SVG layers are clickable and coloured. `targets()` returns `{id, name, cx, cy}`.
+  - **Mode/deck**: `{id, label, tray, subtitle, what, help, kind, targets(), hints?}`. `kind` is one of `zone | pin | river | lake | water` and controls which SVG layers are clickable and coloured. `targets()` returns `{id, name, cx, cy}`, plus optional `flag`.
+  - **Flags deck** (`flags`, on the CH map): a `zone` deck over the cantons whose targets carry `flag:'flags/<ABBR>.svg'`. A target with `flag` renders as an image-only card. Its `aria-label` is a neutral "Bandiera N" (`flagCard`), so the accessible name doesn't give the answer away. The selected-card help uses `helpSelectedFlag` instead of quoting the name, and error lines and chips show the flag in front of the name (`flagImg()`).
   - **Target ID convention**: target IDs must match the IDs that `buildSvg()` binds to click handlers. Canton zones use `abbr` (e.g. `ZH`), and capitals reuse the canton `abbr`. The other prefixes are `d:<name>` for districts, `c:<name>` for cities, `r:<name>` for rivers and `l:<name>` for lakes.
   - **State `S`**: `{map, mode, order, selected, placed{targetId→cardId}, checked, hints, names, view{z,cx,cy}}`. `fresh()` reshuffles the deck and turns `names` off. `setMap()` rebuilds the SVG. `setMode()` only re-renders.
   - **`buildSvg()`** runs once per map and creates the DOM nodes. Rivers get a second, invisible, wider `riverHit` path, and pins a transparent `pinHit` circle, as tap targets. `applyView()` sizes both in screen pixels.
